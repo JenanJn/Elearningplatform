@@ -1,0 +1,46 @@
+<?php
+class Progress {
+    private $conn;
+    private $table_name = "progress";
+
+    public $id;
+    public $user_id;
+    public $lecture_id;
+    public $progress_percentage;
+    public $last_accessed;
+
+    public function __construct($db) {
+        $this->conn = $db;
+    }
+
+    public function updateProgress($user_id, $lecture_id, $progress_percentage) {
+        $query = "INSERT INTO " . $this->table_name . " SET user_id=:user_id, lecture_id=:lecture_id, progress_percentage=:progress_percentage
+                  ON DUPLICATE KEY UPDATE progress_percentage=:progress_percentage, last_accessed=NOW()";
+
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->bindParam(":user_id", $user_id);
+        $stmt->bindParam(":lecture_id", $lecture_id);
+        $stmt->bindParam(":progress_percentage", $progress_percentage);
+
+        if ($stmt->execute()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function getProgress($user_id, $lecture_id) {
+        $query = "SELECT progress_percentage FROM " . $this->table_name . " WHERE user_id = :user_id AND lecture_id = :lecture_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $user_id);
+        $stmt->bindParam(":lecture_id", $lecture_id);
+        $stmt->execute();
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['progress_percentage'];
+    }
+
+    // Other CRUD operations
+}
+?>
